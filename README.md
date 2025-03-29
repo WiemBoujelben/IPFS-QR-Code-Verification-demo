@@ -31,3 +31,5 @@ node server.js
 ```
 Open your browser to:
 http://localhost:3000
+
+enjoy!
