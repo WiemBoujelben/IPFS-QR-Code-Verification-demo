@@ -16,7 +16,7 @@ A demonstration system for storing data on IPFS and verifying it through QR code
 #Installation
 Clone the repository:
 ```bash
-git clone https://github.com/yourusername/ipfs-qr-verification.git](https://github.com/WiemBoujelben/IPFS-QR-Code-Verification-demo.git
+git clone https://github.com/WiemBoujelben/IPFS-QR-Code-Verification-demo.git
 
 cd ipfs-qr-verification
 ```
