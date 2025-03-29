@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPFS QR Code Tester</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .section { margin-bottom: 30px; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        button { padding: 10px 15px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        #qrImagePreview { max-width: 300px; margin-top: 10px; }
+        #result { margin-top: 20px; padding: 15px; border-radius: 4px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>IPFS QR Code Tester</h1>
+    
+    <div class="section">
+        <h2>1. Generate QR Code</h2>
+        <form id="generateForm">
+            <div>
+                <label>Name: <input type="text" name="name" value="Doliprane" required></label>
+            </div>
+            <div>
+                <label>Expiry Date: <input type="date" name="expiryDate" value="2025-12-31" required></label>
+            </div>
+            <div>
+                <label>Manufacturer: <input type="text" name="manufacturer" value="Pharma Inc." required></label>
+            </div>
+            <button type="submit">Generate QR Code</button>
+        </form>
+        <div id="generationResult"></div>
+        <div id="generatedQR"></div>
+    </div>
+
+    <div class="section">
+        <h2>2. Verify QR Code</h2>
+        <form id="verifyForm">
+            <input type="file" id="qrImage" accept="image/*" required>
+            <button type="submit">Verify QR Code</button>
+        </form>
+        <img id="qrImagePreview" style="display: none;">
+        <pre id="result"></pre>
+    </div>
+
+    <script>
+       // Generate QR Code
+    document.getElementById('generateForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = {
+            name: document.querySelector('input[name="name"]').value,
+            expiryDate: document.querySelector('input[name="expiryDate"]').value,
+            manufacturer: document.querySelector('input[name="manufacturer"]').value
+        };
+
+        // Validate input
+        if (!formData.name || !formData.expiryDate || !formData.manufacturer) {
+            document.getElementById('generationResult').innerHTML = `
+                <div class="error">
+                    <p>Please fill all fields</p>
+                </div>
+            `;
+            return;
+        }
+
+        try {
+            const response = await fetch('/generate', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json' 
+                },
+                body: JSON.stringify(formData)
+            });
+            
+            const data = await response.json();
+            const resultDiv = document.getElementById('generationResult');
+            
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to generate QR code');
+            }
+            
+            if (data.success) {
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        <p>QR Code generated successfully!</p>
+                        <p>CID: ${data.cid}</p>
+                    </div>
+                `;
+                
+                document.getElementById('generatedQR').innerHTML = `
+                    <p>Generated QR Code:</p>
+                    <img src="${data.qrUrl}" alt="Generated QR Code" style="max-width: 300px;">
+                `;
+            } else {
+                throw new Error(data.error);
+            }
+        } catch (error) {
+            document.getElementById('generationResult').innerHTML = `
+                <div class="error">
+                    <p>Error: ${error.message}</p>
+                </div>
+            `;
+            console.error('Generation error:', error);
+        }
+    });
+
+        // Verify QR Code
+        // Update the verify form handler
+document.getElementById('verifyForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fileInput = document.getElementById('qrImage');
+    const resultDiv = document.getElementById('result');
+    resultDiv.innerHTML = '<div class="info">Processing...</div>';
+
+    if (!fileInput.files.length) {
+        resultDiv.innerHTML = `
+            <div class="error">
+                <p>Please select a QR code image</p>
+            </div>
+        `;
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('qrImage', fileInput.files[0]);
+
+    try {
+        // Show preview
+        const preview = document.getElementById('qrImagePreview');
+        preview.src = URL.createObjectURL(fileInput.files[0]);
+        preview.style.display = 'block';
+
+        const response = await fetch('/verify', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'Verification failed');
+        }
+
+        if (data.success) {
+            resultDiv.innerHTML = `
+                <div class="success">
+                    <h3>Verification Successful!</h3>
+                    <p>CID: ${data.cid}</p>
+                    <pre>${JSON.stringify(data.data, null, 2)}</pre>
+                </div>
+            `;
+        } else {
+            resultDiv.innerHTML = `
+                <div class="error">
+                    <h3>Verification Failed</h3>
+                    <p>${data.error}</p>
+                    ${data.cid ? `<p>CID: ${data.cid}</p>` : ''}
+                </div>
+            `;
+        }
+    } catch (error) {
+        resultDiv.innerHTML = `
+            <div class="error">
+                <h3>Error</h3>
+                <p>${error.message}</p>
+            </div>
+        `;
+        console.error('Verification error:', error);
+    }
+});
+    </script>
+</body>
+</html>

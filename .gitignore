@@ -1,0 +1,22 @@
+# Node.js
+node_modules/
+npm-debug.log
+
+# IPFS
+ipfs-repo/
+
+# Environment
+.env
+.env.local
+
+# Generated files
+public/qrcodes/*
+!public/qrcodes/.gitkeep  # Keeps the directory
+
+# System files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
